@@ -23,8 +23,6 @@ def add_t1prep(
         PyPulseq Sequence object.
     system
         PyPulseq system limit object.
-    inversion_time
-        Desired inversion time (in seconds).
     rf_duration
         Duration of the adiabatic inversion pulse (in seconds).
     add_spoiler
