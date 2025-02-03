@@ -26,13 +26,6 @@ repos:
     hooks:
       - id: typos
 
-  - repo: https://github.com/fzimmermann89/check_all
-    rev: v1.1
-    hooks:
-      - id: check-init-all
-        args: [--double-quotes, --fix]
-        exclude: ^tests/
-
 ci:
   autofix_commit_msg: |
     [pre-commit] auto fixes from pre-commit hooks
