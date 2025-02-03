@@ -23,7 +23,7 @@ def add_composite_refocusing_block(
     system
         PyPulseq system limit object. Must have rf_dead_time attribute != None.
     duration_180
-        Duration of 180° refocussing block pulse (in seconds). The 90° pulses have half this duration.
+        Duration of 180° refocusing block pulse (in seconds). The 90° pulses have half this duration.
     negative_amp
         Toggles negative amplitude for 180°y pulse. By default, positive amplitudes are used.
 
@@ -111,7 +111,7 @@ def add_t2prep(
         TE is defined as the time between the center of the excitation pulse and the center of the 270° tip-up pulse.
         Therefore, the total duration of the T2 prep block is always longer than the echo time.
     duration_180
-        Duration of 180° refocussing pulse (in seconds).
+        Duration of 180° refocusing pulse (in seconds).
         The duration of other pulses is scaled linearly based on their flip angles.
         For example:
             A 90° pulse will have half the duration of a 180° pulse.
@@ -160,7 +160,7 @@ def add_t2prep(
     if seq is None:
         seq = pp.Sequence(system=system)
 
-    # get current duration of sequence before adding T2prep block
+    # get current duration of sequence before adding T2 preparation block
     time_start = sum(seq.block_durations.values())
 
     # Create 90°x excitation pulse
@@ -200,7 +200,7 @@ def add_t2prep(
     # add delay before 2nd MLEV-4 refocusing pulse
     tau2 = (
         echo_time / 4
-        - (refoc_dur - time_to_midpoint)  # time from midpoint of 180° pulse in 1st refocussing block to end of block
+        - (refoc_dur - time_to_midpoint)  # time from midpoint of 180° pulse in 1st refocusing block to end of block
         - time_to_midpoint  # time from start of 2nd refocusing block to midpoint of 180° pulse
     )
 

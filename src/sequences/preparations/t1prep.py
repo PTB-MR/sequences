@@ -16,7 +16,7 @@ def add_t1prep(
 ) -> tuple[pp.Sequence, float]:
     """Add an adiabatic T1 preparation block to a sequence.
 
-    The adiabatic inversion pulse is a hyperbolic secant pulse with default values similar to the one used by Siemens.
+    The adiabatic inversion pulse is a hyperbolic secant pulse with default values similar to the one used by vendors.
 
     Parameters
     ----------
@@ -55,7 +55,7 @@ def add_t1prep(
     if seq is None:
         seq = pp.Sequence(system=system)
 
-    # get current duration of sequence before adding T2prep block
+    # get current duration of sequence before adding T1 preparation block
     time_start = sum(seq.block_durations.values())
 
     # calculate inversion time delay
