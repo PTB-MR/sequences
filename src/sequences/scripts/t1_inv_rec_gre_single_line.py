@@ -85,6 +85,7 @@ def main(
         delay=system.rf_dead_time,
         system=system,
         return_gz=True,
+        use='excitation',
     )
 
     # create readout gradient and ADC
@@ -106,12 +107,12 @@ def main(
     # calculate minimum echo time
     min_te = (
         rf.shape_dur / 2  # time from center to end of RF pulse
-        + rf.ringdown_time  # RF ringdown time
+        + max(rf.ringdown_time, gz.fall_time)  # RF ringdown time or gradient fall time
         + pp.calc_duration(gzr)  # slice selection rewinder gradient
         + pp.calc_duration(gx_pre)  # readout pre-winder gradient
         + gx.delay  # potential delay of readout gradient
         + gx.rise_time  # rise time of readout gradient
-        + k0_center_id * adc.dwell  # time from begin of ADC to time point of k-space center sample
+        + (k0_center_id + 0.5) * adc.dwell  # time from begin of ADC to time point of k-space center sample
     )
 
     # calculate delay to achieve desired echo time
@@ -121,6 +122,8 @@ def main(
         te_delay = np.ceil((te - min_te) / system.grad_raster_time) * system.grad_raster_time
     else:
         raise ValueError(f'TE must be larger than {min_te * 1000:.2f} ms. Current value is {te * 1000:.2f} ms.')
+
+    print(f'\nMinimum TE: {min_te * 1000:.3f} ms')
 
     for ti_idx, ti in enumerate(inversion_times):
         # set contrast ('ECO') label for current inversion time
@@ -134,14 +137,22 @@ def main(
             # save start time of current TR block
             _start_time_tr_block = sum(seq.block_durations.values())
 
-            seq, _ = add_t1prep(
+            seq, t1prep_dur, t1_prep_time_to_mid = add_t1prep(
                 seq=seq,
                 system=system,
-                inversion_time=ti,
                 rf_duration=rf_inv_duration,
                 spoiler_ramp_time=rf_inv_spoil_risetime,
                 spoiler_flat_time=rf_inv_spoil_flattime,
             )
+
+            # calculate and add inversion time (TI) delay.
+            # TI is defined as time from middle of inversion pulse to middle of excitation pulse.
+            ti_delay = ti - (t1prep_dur - t1_prep_time_to_mid) - system.rf_dead_time - rf_duration / 2
+            if ti_delay < 0:
+                raise ValueError(
+                    'Inversion time too short for given RF inversion and post inversion spoiler durations.'
+                )
+            seq.add_block(pp.make_delay(ti_delay))
 
             # add rf pulse followed by refocusing gradient
             seq.add_block(rf, gz)
