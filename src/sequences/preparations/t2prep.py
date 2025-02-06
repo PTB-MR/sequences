@@ -190,7 +190,7 @@ def add_t2prep(
     seq.add_block(pp.make_delay(tau1))
 
     # add first MLEV-4 refocusing pulse
-    seq, refoc_dur, time_to_midpoint = add_composite_refocusing_block(
+    seq, refoc_dur, time_since_refocusing = add_composite_refocusing_block(
         system=system,
         duration_180=duration_180,
         seq=seq,
@@ -200,8 +200,8 @@ def add_t2prep(
     # add delay before 2nd MLEV-4 refocusing pulse
     tau2 = (
         echo_time / 4
-        - (refoc_dur - time_to_midpoint)  # time from midpoint of 180° pulse in 1st refocusing block to end of block
-        - time_to_midpoint  # time from start of 2nd refocusing block to midpoint of 180° pulse
+        - time_since_refocusing  # time from midpoint of 180° pulse in 1st refocusing block to end of block
+        - (refoc_dur - time_since_refocusing)  # time from start of 2nd refocusing block to midpoint of 180° pulse
     )
 
     if tau2 < 0:
@@ -243,7 +243,7 @@ def add_t2prep(
     # add delay before first tip-up pulse
     tau3 = (
         echo_time / 8
-        - (refoc_dur - time_to_midpoint)  # time from midpoint to end of 4th refocusing block
+        - time_since_refocusing  # time from midpoint to end of 4th refocusing block
         - (system.rf_dead_time + duration_180 / 2 * 3 / 2)  # half duration of 270° pulse)
     )
 
