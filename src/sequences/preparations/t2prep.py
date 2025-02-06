@@ -33,8 +33,8 @@ def add_composite_refocusing_block(
         PyPulseq Sequence object
     block_duration
         Duration of the composite refocusing block (in seconds).
-    time_to_midpoint
-        Time from start of the block to the midpoint of the 180° pulse (in seconds).
+    time_since_refocusing
+        Time passed since the point of refocusing (=middle of refocusing pulse) (in seconds).
         This is not necessarily the center of the block, depending on rf_dead_time and rf_ringdown_time.
 
     Raises
@@ -79,9 +79,9 @@ def add_composite_refocusing_block(
     block_duration = sum(seq.block_durations.values()) - time_start
 
     # calculate time from start to midpoint of block
-    time_to_midpoint = system.rf_dead_time + durations[0] + system.rf_dead_time + durations[1] / 2
+    time_since_refocusing = block_duration - system.rf_dead_time - durations[0] - system.rf_dead_time - durations[1] / 2
 
-    return (seq, block_duration, time_to_midpoint)
+    return (seq, block_duration, time_since_refocusing)
 
 
 def add_t2prep(

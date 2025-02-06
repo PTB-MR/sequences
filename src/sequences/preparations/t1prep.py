@@ -38,8 +38,8 @@ def add_t1prep(
         PyPulseq Sequence object.
     block_duration
         Total duration of the T1 preparation block (in seconds).
-    time_to_midpoint
-        Time from start of the block to the midpoint of the inversion pulse (in seconds).
+    time_since_inversion
+        Time passed since point of inversion (=middle of inversion pulse) (in seconds).
     """
     # set system to default if not provided
     if system is None:
@@ -79,6 +79,6 @@ def add_t1prep(
     block_duration = sum(seq.block_durations.values()) - time_start
 
     # calculate time from start of the block to the midpoint of the inversion pulse
-    time_to_midpoint = system.rf_dead_time + rf_duration / 2
+    time_since_inversion = block_duration - system.rf_dead_time - rf_duration / 2
 
-    return (seq, block_duration, time_to_midpoint)
+    return (seq, block_duration, time_since_inversion)
