@@ -72,7 +72,7 @@ def main(
 
     # define settings of rf excitation pulse
     rf90_duration = 1.28e-3  # duration of the rf excitation pulse [s]
-    rf90_flip_angle = 12  # flip angle of rf excitation pulse [°]
+    rf90_flip_angle = 90  # flip angle of rf excitation pulse [°]
     rf90_bwt = 4  # bandwidth-time product of rf excitation pulse [Hz*s]
     rf90_apodization = 0.5  # apodization factor of rf excitation pulse
 
