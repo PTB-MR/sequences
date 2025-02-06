@@ -186,7 +186,7 @@ def main(
             _start_time_tr_block = sum(seq.block_durations.values())
 
             # add T1 preparation block
-            seq, t1prep_dur, t1_prep_time_to_mid = add_t1prep(
+            seq, _, time_since_inversion = add_t1prep(
                 seq=seq,
                 system=system,
                 rf_duration=rf_inv_duration,
@@ -196,7 +196,7 @@ def main(
 
             # calculate and add inversion time (TI) delay.
             # TI is defined as time from middle of inversion pulse to middle of excitation pulse.
-            ti_delay = ti - (t1prep_dur - t1_prep_time_to_mid) - system.rf_dead_time - rf90_duration / 2
+            ti_delay = ti - time_since_inversion - system.rf_dead_time - rf90_duration / 2
             ti_delay = round_to_raster(ti_delay, system.block_duration_raster)
             if ti_delay < 0:
                 raise ValueError(
