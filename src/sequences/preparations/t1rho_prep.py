@@ -1,7 +1,8 @@
 """Spin-lock T1 rho preparation block."""
 
-import pypulseq as pp
 import numpy as np
+import pypulseq as pp
+
 from sequences.utils import sys_defaults
 from sequences.utils.constants import GYROMAGNETIC_RATIO_PROTON
 
@@ -17,7 +18,7 @@ def add_t1rho_prep(
     spoiler_flat_time: float = 8.4e-3,
 ) -> tuple[pp.Sequence, float, float]:
     """Add spin-lock T1 rho preparation block to a sequence.
-    
+
     The spin-lock block consists of a 90° pulse, a spin-lock pulse with a certain duration (spin lock time) and a 90°
     pulse. Optionally, spoiler gradients can be added after the spin-lock pulse.
 
@@ -58,21 +59,21 @@ def add_t1rho_prep(
 
     # get current duration of sequence before adding T1 preparation block
     time_start = sum(seq.block_durations.values())
-    
+
     # add 90° pulse
     rf_pre = pp.make_sinc_pulse(np.pi / 2, duration=duration_90, phase_offset=np.pi / 2, system=system)
     seq.add_block(rf_pre)
-    
+
     # spin-lock pulse
     # calculate flip angle of spin-lock block pulse, because make_block_pulse does not support b1 amp argument
     flip_angle_sl_block = 2 * np.pi * GYROMAGNETIC_RATIO_PROTON * spin_lock_time * spin_lock_amplitude
     rf_spin_lock = pp.make_block_pulse(flip_angle_sl_block, duration=spin_lock_time, system=system)
     seq.add_block(rf_spin_lock)
-    
+
     # add 90° pulse
     rf_post = pp.make_sinc_pulse(np.pi / 2, duration=duration_90, phase_offset=-np.pi / 2, system=system)
     seq.add_block(rf_post)
-    
+
     # add spoiler gradient if requested
     if add_spoiler:
         gz_spoiler = pp.make_trapezoid(
