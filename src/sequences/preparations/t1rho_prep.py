@@ -1,5 +1,7 @@
 """Spin-lock T1 rho preparation block."""
 
+from copy import deepcopy
+
 import numpy as np
 import pypulseq as pp
 
@@ -10,8 +12,8 @@ from sequences.utils.constants import GYROMAGNETIC_RATIO_PROTON
 def add_t1rho_prep(
     seq: pp.Sequence | None = None,
     system: pp.Opts | None = None,
-    duration_90: float = 10.24e-3,
-    spin_lock_time: float = 10e-3,
+    duration_90: float = 2e-3,
+    spin_lock_time: float = 20e-3,
     spin_lock_amplitude: float = 5.0e-6,
     add_spoiler: bool = True,
     spoiler_ramp_time: float = 6e-4,
@@ -49,10 +51,23 @@ def add_t1rho_prep(
         Total duration of the T1 rho preparation block (in seconds).
     time_of_spoiler
         Time duration of spoiler gradient (in seconds).
+
+    Raises
+    ------
+    ValueError
+        If system limits are provided, but rf_dead_time attribute is not set.
     """
     # set system to default if not provided
     if system is None:
         system = sys_defaults
+
+    # ensure rf_dead_time is not None
+    if system.rf_dead_time is None:
+        raise ValueError('rf_dead_time must be provided in system limits.')
+
+    # set rf_ringdown_time to 0 within this preparation block, since no ADC events are used
+    system = deepcopy(system)
+    system.rf_ringdown_time = 0
 
     if seq is None:
         seq = pp.Sequence(system=system)
@@ -61,17 +76,23 @@ def add_t1rho_prep(
     time_start = sum(seq.block_durations.values())
 
     # add 90° pulse
-    rf_pre = pp.make_sinc_pulse(np.pi / 2, duration=duration_90, phase_offset=np.pi / 2, system=system)
+    rf_pre = pp.make_sinc_pulse(
+        np.pi / 2, duration=duration_90, phase_offset=np.pi / 2, system=system, delay=system.rf_dead_time
+    )
     seq.add_block(rf_pre)
 
     # spin-lock pulse
     # calculate flip angle of spin-lock block pulse, because make_block_pulse does not support b1 amp argument
     flip_angle_sl_block = 2 * np.pi * GYROMAGNETIC_RATIO_PROTON * spin_lock_time * spin_lock_amplitude
-    rf_spin_lock = pp.make_block_pulse(flip_angle_sl_block, duration=spin_lock_time, system=system)
+    rf_spin_lock = pp.make_block_pulse(
+        flip_angle_sl_block, duration=spin_lock_time, system=system, delay=system.rf_dead_time
+    )
     seq.add_block(rf_spin_lock)
 
     # add 90° pulse
-    rf_post = pp.make_sinc_pulse(np.pi / 2, duration=duration_90, phase_offset=-np.pi / 2, system=system)
+    rf_post = pp.make_sinc_pulse(
+        np.pi / 2, duration=duration_90, phase_offset=-np.pi / 2, system=system, delay=system.rf_dead_time
+    )
     seq.add_block(rf_post)
 
     # add spoiler gradient if requested
