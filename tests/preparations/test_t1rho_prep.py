@@ -22,7 +22,6 @@ def test_add_t1rho_prep_system_defaults_if_none(system_defaults):
 
 @pytest.mark.parametrize(
     (
-        'echo_time',
         'duration_90',
         'spin_lock_time',
         'spin_lock_amplitude',

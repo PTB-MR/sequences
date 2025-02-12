@@ -18,7 +18,7 @@ def add_t1rho_prep(
     add_spoiler: bool = True,
     spoiler_ramp_time: float = 6e-4,
     spoiler_flat_time: float = 8.4e-3,
-) -> tuple[pp.Sequence, float, float]:
+) -> tuple[pp.Sequence, float]:
     """Add spin-lock T1 rho preparation block to a sequence.
 
     The spin-lock block consists of a 90° pulse, a spin-lock pulse with a certain duration (spin lock time) and a 90°
@@ -49,8 +49,6 @@ def add_t1rho_prep(
         PyPulseq Sequence object.
     block_duration
         Total duration of the T1 rho preparation block (in seconds).
-    time_of_spoiler
-        Time duration of spoiler gradient (in seconds).
 
     Raises
     ------
@@ -108,7 +106,4 @@ def add_t1rho_prep(
     # calculate total duration of T1rho-prep block
     block_duration = sum(seq.block_durations.values()) - time_start
 
-    # calculate of spoiler gradient
-    time_of_spoiler = gz_spoiler.duration() if add_spoiler else 0.0
-
-    return (seq, block_duration, time_of_spoiler)
+    return (seq, block_duration)
