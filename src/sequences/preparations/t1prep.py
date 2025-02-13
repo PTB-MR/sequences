@@ -78,7 +78,7 @@ def add_t1prep(
     # calculate total duration of T1prep block
     block_duration = sum(seq.block_durations.values()) - time_start
 
-    # calculate time from start of the block to the midpoint of the inversion pulse
+    # calculate time passed since point of inversion (=middle of inversion pulse)
     time_since_inversion = block_duration - system.rf_dead_time - rf_duration / 2
 
     return (seq, block_duration, time_since_inversion)
