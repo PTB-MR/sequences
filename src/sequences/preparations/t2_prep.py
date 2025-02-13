@@ -84,7 +84,7 @@ def add_composite_refocusing_block(
     return (seq, block_duration, time_since_refocusing)
 
 
-def add_t2prep(
+def add_t2_prep(
     seq: pp.Sequence | None = None,
     system: pp.Opts | None = None,
     echo_time: float = 0.1,
