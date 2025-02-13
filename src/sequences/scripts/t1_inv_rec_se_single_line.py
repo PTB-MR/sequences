@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import pypulseq as pp
 
-from sequences.preparations import add_t1prep
+from sequences.preparations import add_t1_inv_prep
 from sequences.utils import round_to_raster
 from sequences.utils import sys_defaults
 
@@ -186,7 +186,7 @@ def main(
             _start_time_tr_block = sum(seq.block_durations.values())
 
             # add T1 preparation block
-            seq, _, time_since_inversion = add_t1prep(
+            seq, _, time_since_inversion = add_t1_inv_prep(
                 seq=seq,
                 system=system,
                 rf_duration=rf_inv_duration,
