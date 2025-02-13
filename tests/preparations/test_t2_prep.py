@@ -4,8 +4,8 @@ from copy import deepcopy
 
 import pypulseq as pp
 import pytest
-from sequences.preparations.t2prep import add_composite_refocusing_block
-from sequences.preparations.t2prep import add_t2prep
+from sequences.preparations.t2_prep import add_composite_refocusing_block
+from sequences.preparations.t2_prep import add_t2_prep
 
 
 def test_add_composite_refocusing_block_raise_error_no_rf_dead_time(system_defaults):
@@ -47,25 +47,25 @@ def test_add_composite_refocusing_block_no_ringdown_dependency(system_defaults, 
     assert total_dur1 == total_dur2
 
 
-def test_add_t2prep_raise_error_no_rf_dead_time(system_defaults):
+def test_add_t2_prep_raise_error_no_rf_dead_time(system_defaults):
     """Test if a ValueError is raised if rf_dead_time is not set."""
     system_defaults.rf_dead_time = None
     with pytest.raises(ValueError, match='rf_dead_time must be provided'):
-        add_t2prep(system=system_defaults)
+        add_t2_prep(system=system_defaults)
 
 
 @pytest.mark.parametrize(('echo_time', 'duration_180'), [(0.01, 1e-3), (0.011, 1e-3), (0.015, 1e-3), (0.04, 4e-3)])
-def test_add_t2prep_fail_on_short_echo_time(system_defaults, echo_time, duration_180):
+def test_add_t2_prep_fail_on_short_echo_time(system_defaults, echo_time, duration_180):
     """Test if function raises an error when desired echo time is too short for given pulse duration."""
     seq = pp.Sequence(system=system_defaults)
     with pytest.raises(ValueError, match='Desired echo time'):
-        add_t2prep(seq=seq, system=system_defaults, echo_time=echo_time, duration_180=duration_180)
+        add_t2_prep(seq=seq, system=system_defaults, echo_time=echo_time, duration_180=duration_180)
 
 
-def test_add_t2prep_system_defaults_if_none(system_defaults):
+def test_add_t2_prep_system_defaults_if_none(system_defaults):
     """Test if system defaults are used if no system limits are provided."""
-    _, block_duration1 = add_t2prep(system=system_defaults)
-    _, block_duration2 = add_t2prep(system=None)
+    _, block_duration1 = add_t2_prep(system=system_defaults)
+    _, block_duration2 = add_t2_prep(system=None)
 
     assert block_duration1 == block_duration2
 
@@ -81,13 +81,13 @@ def test_add_t2prep_system_defaults_if_none(system_defaults):
     ],
     ids=['defaults', 'longer_te', 'longer_pulses', 'no_spoiler', 'longer_spoiler'],
 )
-def test_add_t2prep_duration(
+def test_add_t2_prep_duration(
     system_defaults, echo_time, duration_180, add_spoiler, spoiler_ramp_time, spoiler_flat_time
 ):
     """Ensure the default parameters are set correctly."""
     seq = pp.Sequence(system=system_defaults)
 
-    seq, block_duration = add_t2prep(
+    seq, block_duration = add_t2_prep(
         seq=seq,
         system=system_defaults,
         echo_time=echo_time,
