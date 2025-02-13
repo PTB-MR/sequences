@@ -5,7 +5,7 @@ import pypulseq as pp
 from sequences.utils import sys_defaults
 
 
-def add_t1prep(
+def add_t1_inv_prep(
     seq: pp.Sequence | None = None,
     system: pp.Opts | None = None,
     rf_duration: float = 10.24e-3,

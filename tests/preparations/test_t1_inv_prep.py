@@ -2,13 +2,13 @@
 
 import pypulseq as pp
 import pytest
-from sequences.preparations.t1prep import add_t1prep
+from sequences.preparations.t1_inv_prep import add_t1_inv_prep
 
 
-def test_add_t1prep_system_defaults_if_none(system_defaults):
+def test_add_t1_inv_prep_system_defaults_if_none(system_defaults):
     """Test if system defaults are used if no system limits are provided."""
-    _, block_duration1, _ = add_t1prep(system=system_defaults)
-    _, block_duration2, _ = add_t1prep(system=None)
+    _, block_duration1, _ = add_t1_inv_prep(system=system_defaults)
+    _, block_duration2, _ = add_t1_inv_prep(system=None)
 
     assert block_duration1 == block_duration2
 
@@ -23,11 +23,11 @@ def test_add_t1prep_system_defaults_if_none(system_defaults):
     ],
     ids=['defaults', 'longer_pulse', 'no_spoiler', 'longer_spoiler'],
 )
-def test_add_t1prep_duration(system_defaults, rf_duration, add_spoiler, spoiler_ramp_time, spoiler_flat_time):
+def test_add_t1_inv_prep_duration(system_defaults, rf_duration, add_spoiler, spoiler_ramp_time, spoiler_flat_time):
     """Ensure the default parameters are set correctly."""
     seq = pp.Sequence(system=system_defaults)
 
-    seq, block_duration, _ = add_t1prep(
+    seq, block_duration, _ = add_t1_inv_prep(
         seq=seq,
         system=system_defaults,
         rf_duration=rf_duration,
