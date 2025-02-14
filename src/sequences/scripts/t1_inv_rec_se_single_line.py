@@ -32,7 +32,7 @@ def t1_inv_rec_se_single_line_kernel(
     rf180_flip_angle: float,
     rf180_bwt: float,
     rf180_apodization: float,
-):
+) -> tuple[pp.Sequence, float, float]:
     """Generate a SE-based inversion recovery sequence with one inversion pulse before every readout.
 
     Parameters

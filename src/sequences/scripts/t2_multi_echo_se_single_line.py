@@ -9,6 +9,32 @@ from sequences.utils import round_to_raster
 from sequences.utils import sys_defaults
 
 
+def t2_multi_echo_se_single_line_kernel(
+    system: pp.Opts | None,
+    inversion_times: np.ndarray | None,
+    te: float | None,
+    tr: float,
+    fov_xy: float,
+    n_readout: int,
+    n_phase_encoding: int,
+    slice_thickness: float,
+    rf_inv_duration: float,
+    rf_inv_spoil_risetime: float,
+    rf_inv_spoil_flattime: float,
+    gx_pre_duration: float,
+    gx_flat_time: float,
+    rf90_duration: float,
+    rf90_flip_angle: float,
+    rf90_bwt: float,
+    rf90_apodization: float,
+    rf180_duration: float,
+    rf180_flip_angle: float,
+    rf180_bwt: float,
+    rf180_apodization: float,
+) -> tuple[pp.Sequence, float, float]:
+    return pp.Sequence(system=system), 0.0, 0.0
+
+
 def main(
     system: pp.Opts | None = None,
     echo_times: np.ndarray | None = None,
