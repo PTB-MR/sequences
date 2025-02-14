@@ -150,7 +150,7 @@ def t1_inv_rec_se_single_line_kernel(
         + pp.calc_duration(gx_pre)
         + gx.delay
         + gx.rise_time
-        + (k0_center_id + 0.5) * adc.dwell  # time from begin of ADC to time point of k-space center sample
+        + (k0_center_id + 0.5) * adc.dwell  # time from beginning of ADC to time point of k-space center sample
     )
 
     if te is None:
@@ -176,7 +176,7 @@ def t1_inv_rec_se_single_line_kernel(
             - pp.calc_duration(gx_pre)  # readout pre-winder gradient
             - gx.delay  # potential delay of readout gradient
             - gx.rise_time  # rise time of readout gradient
-            - (k0_center_id + 0.5) * adc.dwell  # time from begin of ADC to time point of k-space center sample
+            - (k0_center_id + 0.5) * adc.dwell  # time from beginning of ADC to time point of k-space center sample
         )
 
         delay_gz_spoil_and_gx_pre = round_to_raster(delay_gz_spoil_and_gx_pre, system.block_duration_raster)

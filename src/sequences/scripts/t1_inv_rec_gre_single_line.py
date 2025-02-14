@@ -119,7 +119,7 @@ def t1_inv_rec_gre_single_line_kernel(
         + pp.calc_duration(gx_pre)  # readout pre-winder gradient
         + gx.delay  # potential delay of readout gradient
         + gx.rise_time  # rise time of readout gradient
-        + (k0_center_id + 0.5) * adc.dwell  # time from begin of ADC to time point of k-space center sample
+        + (k0_center_id + 0.5) * adc.dwell  # time from beginning of ADC to time point of k-space center sample
     )
 
     # calculate delay to achieve desired echo time
