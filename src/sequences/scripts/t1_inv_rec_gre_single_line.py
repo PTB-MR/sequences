@@ -10,19 +10,25 @@ from sequences.utils import round_to_raster
 from sequences.utils import sys_defaults
 
 
-def main(
-    system: pp.Opts | None = None,
-    inversion_times: np.ndarray | None = None,
-    te: float | None = None,
-    tr: float = 8,
-    fov_xy: float = 128e-3,
-    n_readout: int = 128,
-    n_phase_encoding: int = 128,
-    slice_thickness: float = 8e-3,
-    show_plots: bool = True,
-    test_report: bool = True,
-    timing_check: bool = True,
-) -> pp.Sequence:
+def t1_inv_rec_gre_single_line_kernel(
+    system: pp.Opts | None,
+    inversion_times: np.ndarray | None,
+    te: float | None,
+    tr: float,
+    fov_xy: float,
+    n_readout: int,
+    n_phase_encoding: int,
+    slice_thickness: float,
+    rf_inv_duration: float,
+    rf_inv_spoil_risetime: float,
+    rf_inv_spoil_flattime: float,
+    gx_pre_duration: float,
+    gx_flat_time: float,
+    rf_duration: float,
+    rf_flip_angle: float,
+    rf_bwt: float,
+    rf_apodization: float,
+) -> tuple[pp.Sequence, float, float]:
     """Generate a GRE-based inversion recovery sequence with one inversion pulse before every readout.
 
     Parameters
@@ -44,37 +50,37 @@ def main(
         Number of phase encoding steps.
     slice_thickness
         Slice thickness of the 2D slice (in meters).
-    show_plots
-        Toggles sequence plot.
-    test_report
-        Toggles advanced test report.
-    timing_check
-        Toggles timing check of the sequence.
+    rf_inv_duration
+        Duration of adiabatic inversion pulse (in seconds)
+    rf_inv_spoil_risetime
+        Rise time of spoiler after inversion pulse (in seconds)
+    rf_inv_spoil_flattime
+        Flat time of spoiler after inversion pulse (in seconds)
+    gx_pre_duration
+        Duration of readout pre-winder gradient (in seconds)
+    gx_flat_time
+        Flat time of readout gradient (in seconds)
+    rf_duration
+        Duration of the rf excitation pulse (in seconds)
+    rf_flip_angle
+        Flip angle of rf excitation pulse (in degrees)
+    rf_bwt
+        Bandwidth-time product of rf excitation pulse (Hz * seconds)
+    rf_apodization
+        Apodization factor of rf excitation pulse
+
+    Returns
+    -------
+    seq
+        PyPulseq Sequence object
+    time_to_first_tr_block
+        End point of first TR block.
+    min_te
+        Shortest possible echo time.
+
     """
-    if system is None:
-        system = sys_defaults
-
-    if inversion_times is None:
-        inversion_times = np.array([25, 50, 300, 600, 1200, 2400, 4800]) / 1e3
-
     # create PyPulseq Sequence object and set system limits
     seq = pp.Sequence(system=system)
-
-    # define T1prep settings
-    rf_inv_duration = 10.24e-3  # duration of adiabatic inversion pulse [s]
-    rf_inv_spoil_risetime = 0.6e-3  # rise time of spoiler after inversion pulse [s]
-    rf_inv_spoil_flattime = 8.4e-3  # flat time of spoiler after inversion pulse [s]
-
-    # define ADC and gradient timing
-    adc_dwell = system.grad_raster_time
-    gx_pre_duration = 1.0e-3  # duration of readout pre-winder gradient [s]
-    gx_flat_time = n_readout * adc_dwell  # flat time of readout gradient [s]
-
-    # define settings of rf excitation pulse
-    rf_duration = 1.28e-3  # duration of the rf excitation pulse [s]
-    rf_flip_angle = 12  # flip angle of rf excitation pulse [°]
-    rf_bwt = 4  # bandwidth-time product of rf excitation pulse [Hz*s]
-    rf_apodization = 0.5  # apodization factor of rf excitation pulse
 
     # create slice selective excitation pulse and gradients
     rf, gz, gzr = pp.make_sinc_pulse(  # type: ignore
@@ -183,13 +189,98 @@ def main(
             tr_delay = round_to_raster(tr - duration_tr_block, system.block_duration_raster)
 
             # save time for sequence plot
-            if show_plots and ti_idx == 0 and pe_idx == 0:
-                upper_time_limit = duration_tr_block
+            time_to_first_tr_block = duration_tr_block if ti_idx == 0 and pe_idx == 0 else 0
 
             if tr_delay < 0:
                 raise ValueError('Desired TR too short for given sequence parameters.')
 
             seq.add_block(pp.make_delay(tr_delay))
+
+    return seq, time_to_first_tr_block, min_te
+
+
+def main(
+    system: pp.Opts | None = None,
+    inversion_times: np.ndarray | None = None,
+    te: float | None = None,
+    tr: float = 8,
+    fov_xy: float = 128e-3,
+    n_readout: int = 128,
+    n_phase_encoding: int = 128,
+    slice_thickness: float = 8e-3,
+    show_plots: bool = True,
+    test_report: bool = True,
+    timing_check: bool = True,
+) -> pp.Sequence:
+    """Generate a GRE-based inversion recovery sequence with one inversion pulse before every readout.
+
+    Parameters
+    ----------
+    system
+        PyPulseq system limits object.
+    inversion_times
+        Array of inversion times (in seconds).
+        Default values [0.025, 0.050, 0.3, 0.6, 1.2, 2.4, 4.8] s are used if set to None.
+    te
+        Desired echo time (TE) (in seconds). Minimum echo time is used if set to None.
+    tr
+        Desired repetition time (TR) (in seconds).
+    fov_xy
+        Field of view in x and y direction (in meters).
+    n_readout
+        Number of frequency encoding steps.
+    n_phase_encoding
+        Number of phase encoding steps.
+    slice_thickness
+        Slice thickness of the 2D slice (in meters).
+    show_plots
+        Toggles sequence plot.
+    test_report
+        Toggles advanced test report.
+    timing_check
+        Toggles timing check of the sequence.
+    """
+    if system is None:
+        system = sys_defaults
+
+    if inversion_times is None:
+        inversion_times = np.array([0.025, 0.050, 0.3, 0.6, 1.2, 2.4, 4.8])
+
+    # define T1prep settings
+    rf_inv_duration = 10.24e-3  # duration of adiabatic inversion pulse [s]
+    rf_inv_spoil_risetime = 0.6e-3  # rise time of spoiler after inversion pulse [s]
+    rf_inv_spoil_flattime = 8.4e-3  # flat time of spoiler after inversion pulse [s]
+
+    # define ADC and gradient timing
+    adc_dwell = system.grad_raster_time
+    gx_pre_duration = 1.0e-3  # duration of readout pre-winder gradient [s]
+    gx_flat_time = n_readout * adc_dwell  # flat time of readout gradient [s]
+
+    # define settings of rf excitation pulse
+    rf_duration = 1.28e-3  # duration of the rf excitation pulse [s]
+    rf_flip_angle = 12  # flip angle of rf excitation pulse [°]
+    rf_bwt = 4  # bandwidth-time product of rf excitation pulse [Hz*s]
+    rf_apodization = 0.5  # apodization factor of rf excitation pulse
+
+    seq, time_to_first_tr_block, min_te = t1_inv_rec_gre_single_line_kernel(
+        system=system,
+        inversion_times=inversion_times,
+        te=te,
+        tr=tr,
+        fov_xy=fov_xy,
+        n_readout=n_readout,
+        n_phase_encoding=n_phase_encoding,
+        slice_thickness=slice_thickness,
+        rf_inv_duration=rf_inv_duration,
+        rf_inv_spoil_risetime=rf_inv_spoil_risetime,
+        rf_inv_spoil_flattime=rf_inv_spoil_flattime,
+        gx_pre_duration=gx_pre_duration,
+        gx_flat_time=gx_flat_time,
+        rf_duration=rf_duration,
+        rf_flip_angle=rf_flip_angle,
+        rf_bwt=rf_bwt,
+        rf_apodization=rf_apodization,
+    )
 
     # check timing of the sequence
     if timing_check and not test_report:
@@ -225,7 +316,7 @@ def main(
     seq.write(str(output_path / filename), create_signature=True)
 
     if show_plots:
-        seq.plot(time_range=(0, upper_time_limit))
+        seq.plot(time_range=(0, time_to_first_tr_block))
 
     return seq
 
