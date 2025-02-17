@@ -11,8 +11,8 @@ from sequences.utils import sys_defaults
 
 
 def t1_inv_rec_gre_single_line_kernel(
-    system: pp.Opts | None,
-    inversion_times: np.ndarray | None,
+    system: pp.Opts,
+    inversion_times: np.ndarray,
     te: float | None,
     tr: float,
     fov_xy: float,
@@ -37,7 +37,6 @@ def t1_inv_rec_gre_single_line_kernel(
         PyPulseq system limits object.
     inversion_times
         Array of inversion times (in seconds).
-        Default values [25, 50, 300, 600, 1200, 2400, 4800] ms are used if set to None.
     te
         Desired echo time (TE) (in seconds). Minimum echo time is used if set to None.
     tr
@@ -189,7 +188,8 @@ def t1_inv_rec_gre_single_line_kernel(
             tr_delay = round_to_raster(tr - duration_tr_block, system.block_duration_raster)
 
             # save time for sequence plot
-            time_to_first_tr_block = duration_tr_block if ti_idx == 0 and pe_idx == 0 else 0
+            if ti_idx == 0 and pe_idx == 0:
+                time_to_first_tr_block = duration_tr_block
 
             if tr_delay < 0:
                 raise ValueError('Desired TR too short for given sequence parameters.')
