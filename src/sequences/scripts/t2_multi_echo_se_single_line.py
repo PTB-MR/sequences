@@ -12,7 +12,6 @@ from sequences.utils import sys_defaults
 def main(
     system: pp.Opts | None = None,
     echo_times: np.ndarray | None = None,
-    te: float | None = None,
     tr: float = 8,
     fov_xy: float = 128e-3,
     n_readout: int = 128,
@@ -30,6 +29,7 @@ def main(
         PyPulseq system limits object.
     echo_times
         Array of echo times (in seconds).
+        Default values [0.024, 0.05, 0.1, 0.2, 0.4] s are used if set to None.
     tr
         Desired repetition time (TR) (in seconds).
     fov_xy
@@ -84,7 +84,7 @@ def main(
         slice_thickness=slice_thickness,
         apodization=rf90_apodization,
         time_bw_product=rf90_bwt,
-        delay=system.rf_dead_time,
+        delay=system.rf_dead_time,  # type: ignore
         system=system,
         return_gz=True,
         use='excitation',
@@ -101,7 +101,7 @@ def main(
         apodization=rf180_apodization,
         time_bw_product=rf180_bwt,
         phase_offset=np.pi / 2,
-        delay=system.rf_dead_time,
+        delay=system.rf_dead_time,  # type: ignore
         system=system,
         return_gz=True,
         use='refocusing',

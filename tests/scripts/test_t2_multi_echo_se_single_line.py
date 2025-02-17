@@ -26,7 +26,7 @@ def test_seq_creation_error_on_short_tr(system_defaults):
         create_seq(system=system_defaults, tr=5e-3, show_plots=False)
 
 
-def test_seq_duration_vary_params_without_effect(system_defaults):
+def test_seq_duration_vary_params_without_changing_duration(system_defaults):
     """Test if sequence duration is as expected."""
     seq = create_seq(
         system=system_defaults,
