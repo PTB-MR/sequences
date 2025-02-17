@@ -1,9 +1,20 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["setuptools>=42", "wheel", "setuptools-git-versioning>=2.0,<3"]
+build-backend = "setuptools.build_meta:__legacy__"
+
+[tool.setuptools-git-versioning]
+count_commits_from_version_file = true
+enabled = true
+version_file = "src/mr-sequences/VERSION"
+template = "{tag}{env:VERSIONSUFFIX:''}"
+dev_template = "{tag}{env:VERSIONSUFFIX:''}"
+dirty_template = "{tag}+dirty{sha}"
 
 [tool.setuptools]
 include-package-data = true
+
+[tool.setuptools.package-data]
+"mr-sequences" = ["VERSION"]
 
 [project]
 name = "sequences"
