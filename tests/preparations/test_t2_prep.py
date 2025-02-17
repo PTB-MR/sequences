@@ -1,7 +1,5 @@
 """Tests for the MLEV-4 type T2 preparation block."""
 
-from copy import deepcopy
-
 import pypulseq as pp
 import pytest
 from sequences.preparations.t2_prep import add_composite_refocusing_block
