@@ -9,19 +9,28 @@ from sequences.utils import round_to_raster
 from sequences.utils import sys_defaults
 
 
-def main(
-    system: pp.Opts | None = None,
-    echo_times: np.ndarray | None = None,
-    tr: float = 8,
-    fov_xy: float = 128e-3,
-    n_readout: int = 128,
-    n_phase_encoding: int = 128,
-    slice_thickness: float = 8e-3,
-    show_plots: bool = True,
-    test_report: bool = True,
-    timing_check: bool = True,
-) -> pp.Sequence:
-    """Generate a SE-based multi-echo sequence for T2 mapping.
+def t2_multi_echo_se_single_line_kernel(
+    system: pp.Opts,
+    echo_times: np.ndarray,
+    tr: float,
+    fov_xy: float,
+    n_readout: int,
+    n_phase_encoding: int,
+    slice_thickness: float,
+    gx_pre_duration: float,
+    gx_flat_time: float,
+    rf90_duration: float,
+    rf90_flip_angle: float,
+    rf90_bwt: float,
+    rf90_apodization: float,
+    rf180_duration: float,
+    rf180_flip_angle: float,
+    rf180_bwt: float,
+    rf180_apodization: float,
+    gz_spoil_duration: float,
+    gz_spoil_area: float,
+) -> tuple[pp.Sequence, float]:
+    """Generate a SE-based inversion recovery sequence with one inversion pulse before every readout.
 
     Parameters
     ----------
@@ -29,7 +38,6 @@ def main(
         PyPulseq system limits object.
     echo_times
         Array of echo times (in seconds).
-        Default values [0.024, 0.05, 0.1, 0.2, 0.4] s are used if set to None.
     tr
         Desired repetition time (TR) (in seconds).
     fov_xy
@@ -40,42 +48,42 @@ def main(
         Number of phase encoding steps.
     slice_thickness
         Slice thickness of the 2D slice (in meters).
-    show_plots
-        Toggles sequence plot.
-    test_report
-        Toggles advanced test report.
-    timing_check
-        Toggles timing check of the sequence.
+    gx_pre_duration
+        Duration of readout pre-winder gradient (in seconds)
+    gx_flat_time
+        Flat time of readout gradient (in seconds)
+    rf90_duration
+        Duration of the rf excitation pulse (in seconds)
+    rf90_flip_angle
+        Flip angle of rf excitation pulse (in degrees)
+    rf90_bwt
+        Bandwidth-time product of rf excitation pulse (Hz * seconds)
+    rf90_apodization
+        Apodization factor of rf excitation pulse
+    rf180_duration
+        Duration of the rf refocusing pulse (in seconds)
+    rf180_flip_angle
+        Flip angle of rf refocusing pulse (in degrees)
+    rf180_bwt
+        Bandwidth-time product of rf refocusing pulse (Hz * seconds)
+    rf180_apodization
+        Apodization factor of rf refocusing pulse
+    gz_spoil_duration
+        Duration of spoiler gradient (in seconds)
+    gz_spoil_area
+        Area / zeroth gradient moment of spoiler gradient
+
+    Returns
+    -------
+    seq
+        PyPulseq Sequence object
+    time_to_first_tr_block
+        End point of first TR block.
+    min_te
+        Shortest possible echo time.
     """
-    if system is None:
-        system = sys_defaults
-
-    if echo_times is None:
-        echo_times = np.array([0.024, 0.05, 0.1, 0.2, 0.4])
-
     # create PyPulseq Sequence object and set system limits
     seq = pp.Sequence(system=system)
-
-    # define ADC and gradient timing
-    adc_dwell = 20e-6  # 10 µs results in 100 kHz bandwidth
-    gx_pre_duration = 1.0e-3  # duration of readout pre-winder gradient [s]
-    gx_flat_time = n_readout * adc_dwell  # flat time of readout gradient [s]
-
-    # define spoiler gradient settings
-    gz_spoil_duration = 3.2e-3  # duration of spoiler gradient [s]
-    gz_spoil_area = 4 / slice_thickness  # area / zeroth gradient moment of spoiler gradient
-
-    # define settings of rf excitation pulse
-    rf90_duration = 1.28e-3  # duration of the rf excitation pulse [s]
-    rf90_flip_angle = 90  # flip angle of rf excitation pulse [°]
-    rf90_bwt = 4  # bandwidth-time product of rf excitation pulse [Hz*s]
-    rf90_apodization = 0.5  # apodization factor of rf excitation pulse
-
-    # define settings of rf refocusing pulse
-    rf180_duration = 2.56e-3  # duration of the rf refocusing pulse [s]
-    rf180_flip_angle = 180  # flip angle of rf refocusing pulse [°]
-    rf180_bwt = 4  # bandwidth-time product of rf refocusing pulse [Hz*s]
-    rf180_apodization = 0.5  # apodization factor of rf refocusing pulse
 
     # create slice selection 90° and 180° pulse and gradient
     rf90, gz90, _ = pp.make_sinc_pulse(  # type: ignore
@@ -188,16 +196,109 @@ def main(
 
             # calculate TR delay
             duration_tr_block = sum(seq.block_durations.values()) - _start_time_tr_block
-            tr_delay = round_to_raster(tr - duration_tr_block, system.block_duration_raster)
+            tr_delay = round_to_raster(tr - duration_tr_block, system.block_duration_raster)  # type: ignore
 
-            # save time for sequence plot
-            if show_plots and te_idx == 0 and pe_idx == 0:
-                upper_time_limit = duration_tr_block
+            # save duration of all events in the TR block of the first echo time for sequence plot
+            if te_idx == 0 and pe_idx == 0:
+                min_tr_first_echo_block = duration_tr_block
 
             if tr_delay < 0:
                 raise ValueError('Desired TR too short for given sequence parameters.')
 
             seq.add_block(pp.make_delay(tr_delay))
+
+    return seq, min_tr_first_echo_block
+
+
+def main(
+    system: pp.Opts | None = None,
+    echo_times: np.ndarray | None = None,
+    tr: float = 8,
+    fov_xy: float = 128e-3,
+    n_readout: int = 128,
+    n_phase_encoding: int = 128,
+    slice_thickness: float = 8e-3,
+    show_plots: bool = True,
+    test_report: bool = True,
+    timing_check: bool = True,
+) -> pp.Sequence:
+    """Generate a SE-based multi-echo sequence for T2 mapping.
+
+    Parameters
+    ----------
+    system
+        PyPulseq system limits object.
+    echo_times
+        Array of echo times (in seconds).
+        Default values [0.024, 0.05, 0.1, 0.2, 0.4] s are used if set to None.
+    tr
+        Desired repetition time (TR) (in seconds).
+    fov_xy
+        Field of view in x and y direction (in meters).
+    n_readout
+        Number of frequency encoding steps.
+    n_phase_encoding
+        Number of phase encoding steps.
+    slice_thickness
+        Slice thickness of the 2D slice (in meters).
+    show_plots
+        Toggles sequence plot.
+    test_report
+        Toggles advanced test report.
+    timing_check
+        Toggles timing check of the sequence.
+    """
+    if system is None:
+        system = sys_defaults
+
+    if echo_times is None:
+        echo_times = np.array([0.024, 0.05, 0.1, 0.2, 0.4])
+
+    # create PyPulseq Sequence object and set system limits
+    seq = pp.Sequence(system=system)
+
+    # define ADC and gradient timing
+    adc_dwell = 20e-6  # 10 µs results in 100 kHz bandwidth
+    gx_pre_duration = 1.0e-3  # duration of readout pre-winder gradient [s]
+    gx_flat_time = n_readout * adc_dwell  # flat time of readout gradient [s]
+
+    # define spoiler gradient settings
+    gz_spoil_duration = 3.2e-3  # duration of spoiler gradient [s]
+    gz_spoil_area = 4 / slice_thickness  # area / zeroth gradient moment of spoiler gradient
+
+    # define settings of rf excitation pulse
+    rf90_duration = 1.28e-3  # duration of the rf excitation pulse [s]
+    rf90_flip_angle = 90  # flip angle of rf excitation pulse [°]
+    rf90_bwt = 4  # bandwidth-time product of rf excitation pulse [Hz*s]
+    rf90_apodization = 0.5  # apodization factor of rf excitation pulse
+
+    # define settings of rf refocusing pulse
+    rf180_duration = 2.56e-3  # duration of the rf refocusing pulse [s]
+    rf180_flip_angle = 180  # flip angle of rf refocusing pulse [°]
+    rf180_bwt = 4  # bandwidth-time product of rf refocusing pulse [Hz*s]
+    rf180_apodization = 0.5  # apodization factor of rf refocusing pulse
+
+    seq, min_tr_first_echo_block = t2_multi_echo_se_single_line_kernel(
+        system=system,
+        echo_times=echo_times,
+        tr=tr,
+        fov_xy=fov_xy,
+        n_readout=n_readout,
+        n_phase_encoding=n_phase_encoding,
+        slice_thickness=slice_thickness,
+        gx_pre_duration=gx_pre_duration,
+        gx_flat_time=gx_flat_time,
+        rf90_duration=rf90_duration,
+        rf90_flip_angle=rf90_flip_angle,
+        rf90_bwt=rf90_bwt,
+        rf90_apodization=rf90_apodization,
+        rf180_duration=rf180_duration,
+        rf180_flip_angle=rf180_flip_angle,
+        rf180_bwt=rf180_bwt,
+        rf180_apodization=rf180_apodization,
+        gz_spoil_duration=gz_spoil_duration,
+        gz_spoil_area=gz_spoil_area,
+    )
 
     # check timing of the sequence
     if timing_check and not test_report:
@@ -231,7 +332,7 @@ def main(
 
     # plot first TR block
     if show_plots:
-        seq.plot(time_range=(0, upper_time_limit))
+        seq.plot(time_range=(0, min_tr_first_echo_block))
 
     return seq
 
