@@ -1,6 +1,4 @@
-"""Spin-lock T1 rho preparation block."""
-
-from copy import deepcopy
+"""Spin-lock T1rho preparation block."""
 
 import numpy as np
 import pypulseq as pp
@@ -19,10 +17,10 @@ def add_t1rho_prep(
     spoiler_ramp_time: float = 6e-4,
     spoiler_flat_time: float = 8.4e-3,
 ) -> tuple[pp.Sequence, float]:
-    """Add spin-lock T1 rho preparation block to a sequence.
+    """Add on-resonant spin-lock T1rho preparation block to a sequence.
 
-    The spin-lock block consists of a 90° pulse, a spin-lock pulse with a certain duration (spin lock time) and a 90°
-    pulse. Optionally, spoiler gradients can be added after the spin-lock pulse.
+    The on-resonant spin-lock block consists of a 90° tip down pulse, a spin-lock pulse with a certain duration
+    (spin lock time) and a 90° tip up pulse. Optionally, spoiler gradients can be added after the spin-lock pulse.
 
     Parameters
     ----------
@@ -35,7 +33,7 @@ def add_t1rho_prep(
     spin_lock_time
         Duration of the spin-lock pulse (in seconds).
     spin_lock_amplitude
-        Ampli   tude of the spin-lock pulse (in T).
+        Amplitude of the spin-lock pulse (in T).
     add_spoiler
         Toggles addition of spoiler gradients after the spin lock pulse.
     spoiler_ramp_time
@@ -48,48 +46,50 @@ def add_t1rho_prep(
     seq
         PyPulseq Sequence object.
     block_duration
-        Total duration of the T1 rho preparation block (in seconds).
-
-    Raises
-    ------
-    ValueError
-        If system limits are provided, but rf_dead_time attribute is not set.
+        Total duration of the T1rho preparation block (in seconds).
     """
     # set system to default if not provided
     if system is None:
         system = sys_defaults
 
-    # ensure rf_dead_time is not None
-    if system.rf_dead_time is None:
-        raise ValueError('rf_dead_time must be provided in system limits.')
-
-    # set rf_ringdown_time to 0 within this preparation block, since no ADC events are used
-    system = deepcopy(system)
-    system.rf_ringdown_time = 0
-
+    # create new sequence with provided system limits if seq is not provided
     if seq is None:
         seq = pp.Sequence(system=system)
 
     # get current duration of sequence before adding T1 preparation block
     time_start = sum(seq.block_durations.values())
 
-    # add 90° pulse
+    # add 90° tip down pulse with phase offset of pi/2
     rf_pre = pp.make_sinc_pulse(
-        np.pi / 2, duration=duration_90, phase_offset=np.pi / 2, system=system, delay=system.rf_dead_time
+        flip_angle=np.pi / 2,
+        delay=system.rf_dead_time,
+        duration=duration_90,
+        phase_offset=np.pi / 2,
+        system=system,
+        use='preparation',
     )
     seq.add_block(rf_pre)
 
-    # spin-lock pulse
-    # calculate flip angle of spin-lock block pulse, because make_block_pulse does not support b1 amp argument
+    # spin-lock pulse without phase offset
+    # calculate flip angle of spin-lock block pulse because make_block_pulse does not support b1 amp argument
     flip_angle_sl_block = 2 * np.pi * GYROMAGNETIC_RATIO_PROTON * spin_lock_time * spin_lock_amplitude
     rf_spin_lock = pp.make_block_pulse(
-        flip_angle_sl_block, duration=spin_lock_time, system=system, delay=system.rf_dead_time
+        flip_angle=flip_angle_sl_block,
+        delay=system.rf_dead_time,
+        duration=spin_lock_time,
+        system=system,
+        use='preparation',
     )
     seq.add_block(rf_spin_lock)
 
-    # add 90° pulse
+    # add 90° pulse tip up with phase offset of -pi/2
     rf_post = pp.make_sinc_pulse(
-        np.pi / 2, duration=duration_90, phase_offset=-np.pi / 2, system=system, delay=system.rf_dead_time
+        flip_angle=np.pi / 2,
+        delay=system.rf_dead_time,
+        duration=duration_90,
+        phase_offset=-np.pi / 2,
+        system=system,
+        use='preparation',
     )
     seq.add_block(rf_post)
 
@@ -103,7 +103,7 @@ def add_t1rho_prep(
         )
         seq.add_block(gz_spoiler)
 
-    # calculate total duration of T1rho-prep block
+    # calculate total duration of T1rho preparation block
     block_duration = sum(seq.block_durations.values()) - time_start
 
     return (seq, block_duration)

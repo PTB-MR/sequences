@@ -5,13 +5,6 @@ import pytest
 from sequences.preparations.t1rho_prep import add_t1rho_prep
 
 
-def test_add_t1rho_prep_raise_error_no_rf_dead_time(system_defaults):
-    """Test if a ValueError is raised if rf_dead_time is not set."""
-    system_defaults.rf_dead_time = None
-    with pytest.raises(ValueError, match='rf_dead_time must be provided'):
-        add_t1rho_prep(system=system_defaults)
-
-
 def test_add_t1rho_prep_system_defaults_if_none(system_defaults):
     """Test if system defaults are used if no system limits are provided."""
     _, block_duration1 = add_t1rho_prep(system=system_defaults)
@@ -58,10 +51,13 @@ def test_add_t1rho_prep_duration(
     manual_time_calc = (
         system_defaults.rf_dead_time  # dead time before 90° pulse
         + duration_90
+        + system_defaults.rf_ringdown_time  # ringdown time after 90° pulse
         + system_defaults.rf_dead_time  # dead time before spin-lock pulse
         + spin_lock_time
+        + system_defaults.rf_ringdown_time  # ringdown time after spin-lock pulse
         + system_defaults.rf_dead_time  # dead time before 90° pulse
         + duration_90
+        + system_defaults.rf_ringdown_time  # ringdown time after 90° pulse
     )
     if add_spoiler:
         manual_time_calc += 2 * spoiler_ramp_time + spoiler_flat_time
