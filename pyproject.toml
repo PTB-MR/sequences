@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 include-package-data = true
 
 [project]
-name = "ptb-mr-sequences"
+name = "mr-sequences"
 version = "0.0.1"
 description = "(Py)Pulseq-based MRI sequences."
 readme = "README.md"
