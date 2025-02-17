@@ -1,7 +1,5 @@
 """MLEV-4 type T2 preparation block."""
 
-from copy import deepcopy
-
 import numpy as np
 import pypulseq as pp
 
@@ -36,20 +34,7 @@ def add_composite_refocusing_block(
     time_since_refocusing
         Time passed since the point of refocusing (=middle of refocusing pulse) (in seconds).
         This is not necessarily the center of the block, depending on rf_dead_time and rf_ringdown_time.
-
-    Raises
-    ------
-    ValueError
-        If rf_dead_time is not set in system limits.
     """
-    # ensure rf_dead_time is not None
-    if system.rf_dead_time is None:
-        raise ValueError('rf_dead_time must be provided in system limits.')
-
-    # set rf_ringdown_time to 0 within this preparation block, since no ADC events are used
-    system = deepcopy(system)
-    system.rf_ringdown_time = 0
-
     # define flip angles and durations of RF pulses
     flip_angles = [90, 180, 90]
     durations = [duration_180 / 2, duration_180, duration_180 / 2]
@@ -67,7 +52,7 @@ def add_composite_refocusing_block(
     for fa, phase, dur in zip(flip_angles, phases, durations, strict=True):
         rf = pp.make_block_pulse(
             flip_angle=fa * np.pi / 180,
-            delay=system.rf_dead_time,
+            delay=system.rf_dead_time,  # type: ignore
             duration=dur,
             phase_offset=phase * np.pi / 180,
             system=system,
@@ -78,9 +63,14 @@ def add_composite_refocusing_block(
     # calculate total block duration
     block_duration = sum(seq.block_durations.values()) - time_start
 
-    # calculate time from start to midpoint of block
-    time_since_refocusing = block_duration - system.rf_dead_time - durations[0] - system.rf_dead_time - durations[1] / 2
-
+    # calculate time from refocusing point to end of block
+    time_since_refocusing = (
+        durations[1] / 2  # half duration of 180° pulse
+        + system.rf_ringdown_time  # ringdown time of 180° pulse  # type: ignore
+        + system.rf_dead_time  # dead time of 90° pulse
+        + durations[2]  # duration of 2nd 90° pulse
+        + system.rf_ringdown_time  # ringdown time of 2nd 90° pulse
+    )
     return (seq, block_duration, time_since_refocusing)
 
 
@@ -105,7 +95,7 @@ def add_t2_prep(
     seq
         PyPulseq Sequence object.
     system
-        PyPulseq system limit object. Must have rf_dead_time attribute != None.
+        PyPulseq system limit object.
     echo_time
         Desired echo time (TE) of the block (in seconds).
         TE is defined as the time between the center of the excitation pulse and the center of the 270° tip-up pulse.
@@ -134,7 +124,6 @@ def add_t2_prep(
     Raises
     ------
     ValueError
-        If system limits are provided, but rf_dead_time attribute is not set.
         If desired echo_time is too short to create the T2 preparation block.
 
     References
@@ -149,14 +138,7 @@ def add_t2_prep(
     if system is None:
         system = sys_defaults
 
-    # ensure rf_dead_time is not None
-    if system.rf_dead_time is None:
-        raise ValueError('rf_dead_time must be provided in system limits.')
-
-    # set rf_ringdown_time to 0 within this preparation block, since no ADC events are used
-    system = deepcopy(system)
-    system.rf_ringdown_time = 0
-
+    # create new sequence if not provided
     if seq is None:
         seq = pp.Sequence(system=system)
 
@@ -166,7 +148,7 @@ def add_t2_prep(
     # Create 90°x excitation pulse
     rf_90 = pp.make_block_pulse(
         flip_angle=np.pi / 2,
-        delay=system.rf_dead_time,
+        delay=system.rf_dead_time,  # type: ignore
         duration=duration_180 / 2,
         system=system,
         use='preparation',
@@ -175,12 +157,17 @@ def add_t2_prep(
     # add 90°x pulse to sequence
     seq.add_block(rf_90)
 
-    # Calculate delay before 1st MLEV-4 refocusing pulse
+    # Calculate delay before 1st MLEV-4 refocusing pulse.
+    # We have to calculate it manually because we need it before we add the 1st refocusing block to the sequence.
     tau1 = (
         echo_time / 8
         - duration_180 / 4  # half duration of 90° excitation pulse
-        - (system.rf_dead_time + duration_180 / 2)  # duration of 90° pulse in composite refocusing block
-        - (system.rf_dead_time + duration_180 / 2)  # half duration of 180° pulse in composite refocusing block
+        - system.rf_ringdown_time  # ringdown time of 90° excitation pulse  # type: ignore
+        - system.rf_dead_time  # dead time of 90° pulse in refocusing block
+        - duration_180 / 2  # duration of 90° pulse in refocusing block
+        - system.rf_ringdown_time  # ringdown time of 90° pulse in refocusing block
+        - system.rf_dead_time  # dead time of 180° pulse in refocusing block
+        - duration_180 / 2  # half duration of 180° pulse in refocusing block
     )
 
     if tau1 < 0:
@@ -200,8 +187,8 @@ def add_t2_prep(
     # add delay before 2nd MLEV-4 refocusing pulse
     tau2 = (
         echo_time / 4
-        - time_since_refocusing  # time from midpoint of 180° pulse in 1st refocusing block to end of block
-        - (refoc_dur - time_since_refocusing)  # time from start of 2nd refocusing block to midpoint of 180° pulse
+        - time_since_refocusing  # time since refocusing in 1st refocusing block
+        - (refoc_dur - time_since_refocusing)  # time until refocusing point in 2nd block
     )
 
     if tau2 < 0:
@@ -243,8 +230,9 @@ def add_t2_prep(
     # add delay before first tip-up pulse
     tau3 = (
         echo_time / 8
-        - time_since_refocusing  # time from midpoint to end of 4th refocusing block
-        - (system.rf_dead_time + duration_180 / 2 * 3 / 2)  # half duration of 270° pulse)
+        - time_since_refocusing  # time since refocusing in 4th refocusing block  # type: ignore
+        - system.rf_dead_time  # dead time of 270° pulse in tip-up block
+        - duration_180 / 2 * 3 / 2  # half duration of 270° pulse
     )
 
     if tau3 < 0:
@@ -256,7 +244,7 @@ def add_t2_prep(
     # create 270° pulse of composite tip-up pulse (270°x + [-360]°x)
     rf_tip_up_270 = pp.make_block_pulse(
         flip_angle=3 * np.pi / 2,
-        delay=system.rf_dead_time,
+        delay=system.rf_dead_time,  # type: ignore
         duration=duration_180 / 2 * 3,
         system=system,
         use='preparation',
@@ -265,7 +253,7 @@ def add_t2_prep(
     # create -360° pulse of composite tip-up pulse (270°x + [-360]°x)
     rf_tip_up_360 = pp.make_block_pulse(
         flip_angle=-2 * np.pi,
-        delay=system.rf_dead_time,
+        delay=system.rf_dead_time,  # type: ignore
         duration=duration_180 * 2,
         system=system,
         use='preparation',
@@ -279,7 +267,7 @@ def add_t2_prep(
     if add_spoiler:
         gz_spoil = pp.make_trapezoid(
             channel='z',
-            amplitude=0.4 * system.max_grad,
+            amplitude=0.4 * system.max_grad,  # type: ignore
             flat_time=spoiler_flat_time,
             rise_time=spoiler_ramp_time,
             system=system,

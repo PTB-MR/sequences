@@ -92,7 +92,7 @@ def t2_multi_echo_se_single_line_kernel(
         slice_thickness=slice_thickness,
         apodization=rf90_apodization,
         time_bw_product=rf90_bwt,
-        delay=system.rf_dead_time,
+        delay=system.rf_dead_time,  # type: ignore
         system=system,
         return_gz=True,
         use='excitation',
@@ -109,7 +109,7 @@ def t2_multi_echo_se_single_line_kernel(
         apodization=rf180_apodization,
         time_bw_product=rf180_bwt,
         phase_offset=np.pi / 2,
-        delay=system.rf_dead_time,
+        delay=system.rf_dead_time,  # type: ignore
         system=system,
         return_gz=True,
         use='refocusing',
