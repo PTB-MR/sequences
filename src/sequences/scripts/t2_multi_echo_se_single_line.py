@@ -29,7 +29,7 @@ def t2_multi_echo_se_single_line_kernel(
     rf180_apodization: float,
     gz_spoil_duration: float,
     gz_spoil_area: float,
-) -> tuple[pp.Sequence, float, float]:
+) -> tuple[pp.Sequence, float]:
     """Generate a SE-based inversion recovery sequence with one inversion pulse before every readout.
 
     Parameters
@@ -196,18 +196,18 @@ def t2_multi_echo_se_single_line_kernel(
 
             # calculate TR delay
             duration_tr_block = sum(seq.block_durations.values()) - _start_time_tr_block
-            tr_delay = round_to_raster(tr - duration_tr_block, system.block_duration_raster)
+            tr_delay = round_to_raster(tr - duration_tr_block, system.block_duration_raster)  # type: ignore
 
-            # save time for sequence plot
+            # save duration of all events in the TR block of the first echo time for sequence plot
             if te_idx == 0 and pe_idx == 0:
-                time_to_first_tr_block = duration_tr_block
+                min_tr_first_echo_block = duration_tr_block
 
             if tr_delay < 0:
                 raise ValueError('Desired TR too short for given sequence parameters.')
 
             seq.add_block(pp.make_delay(tr_delay))
 
-    return seq, time_to_first_tr_block
+    return seq, min_tr_first_echo_block
 
 
 def main(
@@ -278,7 +278,7 @@ def main(
     rf180_bwt = 4  # bandwidth-time product of rf refocusing pulse [Hz*s]
     rf180_apodization = 0.5  # apodization factor of rf refocusing pulse
 
-    seq, time_to_first_tr_block = t2_multi_echo_se_single_line_kernel(
+    seq, min_tr_first_echo_block = t2_multi_echo_se_single_line_kernel(
         system=system,
         echo_times=echo_times,
         tr=tr,
@@ -332,7 +332,7 @@ def main(
 
     # plot first TR block
     if show_plots:
-        seq.plot(time_range=(0, time_to_first_tr_block))
+        seq.plot(time_range=(0, min_tr_first_echo_block))
 
     return seq
 
