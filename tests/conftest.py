@@ -1,9 +1,9 @@
-"""PyTest fixtures for the PTB-MR/sequences package."""
+"""PyTest fixtures for the MRseq package."""
 
 from copy import deepcopy
 
 import pytest
-from sequences.utils import sys_defaults
+from mrseq.utils import sys_defaults
 
 
 @pytest.fixture(scope='function')

@@ -2,7 +2,7 @@
 
 import pypulseq as pp
 import pytest
-from sequences.preparations.t1rho_prep import add_t1rho_prep
+from mrseq.preparations.t1rho_prep import add_t1rho_prep
 
 
 def test_add_t1rho_prep_system_defaults_if_none(system_defaults):

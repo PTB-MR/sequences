@@ -5,9 +5,9 @@ from pathlib import Path
 import numpy as np
 import pypulseq as pp
 
-from sequences.preparations import add_t1_inv_prep
-from sequences.utils import round_to_raster
-from sequences.utils import sys_defaults
+from mrseq.preparations import add_t1_inv_prep
+from mrseq.utils import round_to_raster
+from mrseq.utils import sys_defaults
 
 
 def t1_inv_rec_se_single_line_kernel(

@@ -2,8 +2,8 @@
 
 import pypulseq as pp
 import pytest
-from sequences.preparations.t2_prep import add_composite_refocusing_block
-from sequences.preparations.t2_prep import add_t2_prep
+from mrseq.preparations.t2_prep import add_composite_refocusing_block
+from mrseq.preparations.t2_prep import add_t2_prep
 
 
 @pytest.mark.parametrize(

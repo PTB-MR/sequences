@@ -3,7 +3,7 @@
 import numpy as np
 import pypulseq as pp
 
-from sequences.utils import sys_defaults
+from mrseq.utils import sys_defaults
 
 
 def add_composite_refocusing_block(

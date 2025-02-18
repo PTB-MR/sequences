@@ -2,7 +2,7 @@
 
 import pypulseq as pp
 
-from sequences.utils import sys_defaults
+from mrseq.utils import sys_defaults
 
 
 def add_t1_inv_prep(

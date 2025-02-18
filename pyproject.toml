@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 include-package-data = true
 
 [project]
-name = "mr-sequences"
+name = "mrseq"
 version = "0.0.1"
 description = "(Py)Pulseq-based MRI sequences."
 readme = "README.md"
@@ -41,7 +41,7 @@ sigpy = ["sigpy>=0.1.26"]
 
 
 [project.urls]
-"repository" = "https://github.com/PTB-MR/sequences"
+"repository" = "https://github.com/PTB-MR/mrseq"
 
 # PyTest section
 [tool.pytest.ini_options]

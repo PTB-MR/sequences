@@ -3,8 +3,8 @@
 import numpy as np
 import pypulseq as pp
 
-from sequences.utils import sys_defaults
-from sequences.utils.constants import GYROMAGNETIC_RATIO_PROTON
+from mrseq.utils import sys_defaults
+from mrseq.utils.constants import GYROMAGNETIC_RATIO_PROTON
 
 
 def add_t1rho_prep(
