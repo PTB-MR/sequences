@@ -95,14 +95,13 @@ jobs:
           pytest-coverage-path: pytest-coverage.txt
           junitxml-path: pytest.xml
 
-      # Todo: create a GIST and GIST secret to enable badge creation
-      # - name: Create Coverage Badge on push to master
-      #   uses: schneegans/dynamic-badges-action@v1.7.0
-      #   with:
-      #     auth: ${{ secrets.GIST_SECRET }}
-      #     gistID: xxx
-      #     filename: coverage.json
-      #     label: Coverage Report
-      #     message: ${{ steps.coverage_comment.outputs.coverage }}
-      #     color: ${{ steps.coverage_comment.outputs.color }}
-      #     namedLogo: python
+      - name: Create Coverage Badge on push to main
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: 330a0c00b5fa35d89bbc73ea6e8d99be
+          filename: coverage.json
+          label: Coverage Report
+          message: ${{ steps.coverage_comment.outputs.coverage }}
+          color: ${{ steps.coverage_comment.outputs.color }}
+          namedLogo: python
