@@ -21,7 +21,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install 'sequences' Package and Dependencies
+      - name: Install 'MRseq' Package and Dependencies
         run: pip install --upgrade --upgrade-strategy eager .[test]
 
       - name: Install PyTest GitHub Annotation Plugin
@@ -31,7 +31,7 @@ jobs:
         shell: bash # use bash to enable pipefail
         run: |
           pytest -n 4 --junitxml=pytest.xml \
-          --cov-report=term-missing:skip-covered --cov=sequences | tee pytest-coverage.txt
+          --cov-report=term-missing:skip-covered --cov=mrseq | tee pytest-coverage.txt
 
       - name: Upload PyTest Coverage Report
         if: always()

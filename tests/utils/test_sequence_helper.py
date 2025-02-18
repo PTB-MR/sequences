@@ -1,7 +1,7 @@
 """Tests for sequence helper functions."""
 
 import pytest
-from sequences.utils import round_to_raster
+from mrseq.utils import round_to_raster
 
 
 @pytest.mark.parametrize(

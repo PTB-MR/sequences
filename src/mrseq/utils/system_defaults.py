@@ -1,4 +1,4 @@
-"""Define system limitation defaults for the sequences package."""
+"""Define default system limitations."""
 
 from pypulseq.opts import Opts
 

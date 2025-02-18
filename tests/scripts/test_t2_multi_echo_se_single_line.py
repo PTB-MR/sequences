@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from sequences.scripts.t2_multi_echo_se_single_line import main as create_seq
+from mrseq.scripts.t2_multi_echo_se_single_line import main as create_seq
 
 EXPECTED_DUR = 5120.000970  # defined 2025-02-06
 

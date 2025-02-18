@@ -1,7 +1,7 @@
 """Tests for Gold standard GRE-based inversion recovery sequence."""
 
 import pytest
-from sequences.scripts.t1_inv_rec_gre_single_line import main as create_seq
+from mrseq.scripts.t1_inv_rec_gre_single_line import main as create_seq
 
 EXPECTED_DUR = 7168.000320  # defined 2025-02-03
 
