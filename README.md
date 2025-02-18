@@ -17,5 +17,5 @@ We are looking forward to your contributions via Pull-Requests.
 
 1. Clone the MRseq repository
 2. Create/select a python environment
-3. Install "MRseq" in editable mode including test dependencies: ``` pip install -e ".[test]" ```
+3. Install "MRseq" in editable mode including test dependencies: ``` pip install -e ".[dev]" ```
 4. Setup pre-commit hook: ``` pre-commit install ```
