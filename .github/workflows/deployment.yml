@@ -3,7 +3,7 @@ name: Build and Deploy Package
 on:
   push:
     paths:
-      - src/mr-sequences/VERSION
+      - src/mrseq/VERSION
 
 jobs:
   check_version_change:
@@ -22,12 +22,12 @@ jobs:
           base: main
           filters: |
             version_changed:
-              - 'src/mr-sequences/VERSION'
+              - 'src/mrseq/VERSION'
 
       - name: Set Version Suffix
         id: set_suffix
         run: |
-          VERSION=$(cat src/mr-sequences/VERSION)
+          VERSION=$(cat src/mrseq/VERSION)
           SUFFIX=rc$(date +%s)
           echo "VERSIONSUFFIX=$SUFFIX" >> $GITHUB_ENV
           echo "suffix=$SUFFIX" >> $GITHUB_OUTPUT
@@ -80,7 +80,7 @@ jobs:
 
     environment:
       name: pypi
-      url: https://pypi.org/project/mr-sequences
+      url: https://pypi.org/project/mrseq
 
     permissions:
       contents: write

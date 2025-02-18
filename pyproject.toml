@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta:__legacy__"
 [tool.setuptools-git-versioning]
 count_commits_from_version_file = true
 enabled = true
-version_file = "src/mr-sequences/VERSION"
+version_file = "src/mrseq/VERSION"
 template = "{tag}{env:VERSIONSUFFIX:''}"
 dev_template = "{tag}{env:VERSIONSUFFIX:''}"
 dirty_template = "{tag}+dirty{sha}"
@@ -14,14 +14,14 @@ dirty_template = "{tag}+dirty{sha}"
 include-package-data = true
 
 [tool.setuptools.package-data]
-"mr-sequences" = ["VERSION"]
+"mrseq" = ["VERSION"]
 
 [project]
 name = "mrseq"
 version = "0.0.1"
 description = "(Py)Pulseq-based MRI sequences."
 readme = "README.md"
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.10,<3.14"
 license = { file = "LICENSE" }
 keywords = ["MRI, Pulseq, PyPulseq, pulse sequence"]
 authors = [
@@ -34,6 +34,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3 :: Only",
 ]
 
